@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P5.js Space Invaders</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+</head>
+
+<body>
+    <p>Number of Invaders left: <span id="number_of_invaders"></span></p>
+    <p>Shots Fired: <span id="shots_fired">0</span></p>
+    <p>Shots on Target: <span id="shots_on_target">0</span></p>
+    <p>Score: <span id="score">0</span></p>
+    <script>
+        // Create and manage laser sound
+        class LaserSound {
+            constructor(soundFile) {
+                // Create audio object
+                this.audio = new Audio(soundFile);
+
+                // Pre-load the audio
+                this.audio.preload = 'auto';
+
+                // Set volume (0.0 to 1.0)
+                this.audio.volume = 0.5;
+
+                // Pool of audio objects for rapid fire
+                this.audioPool = [];
+                this.poolSize = 5;
+                this.currentIndex = 0;
+
+                // Create multiple audio instances for overlapping sounds
+                for (let i = 0; i < this.poolSize; i++) {
+                    const audioClone = new Audio(soundFile);
+                    audioClone.preload = 'auto';
+                    audioClone.volume = 0.5;
+                    this.audioPool.push(audioClone);
+                }
+            }
+
+            // Play laser sound
+            play() {
+                try {
+                    // Use audio pool for rapid fire capability
+                    const audio = this.audioPool[this.currentIndex];
+
+                    // Reset to beginning if already playing
+                    audio.currentTime = 0;
+
+                    // Play the sound
+                    audio.play().catch(e => {
+                        console.log('Audio play failed:', e);
+                    });
+
+                    // Move to next audio object in pool
+                    this.currentIndex = (this.currentIndex + 1) % this.poolSize;
+
+                } catch (error) {
+                    console.error('Error playing laser sound:', error);
+                }
+            }
+
+            // Set volume for all audio instances
+            setVolume(volume) {
+                this.audio.volume = volume;
+                this.audioPool.forEach(audio => {
+                    audio.volume = volume;
+                });
+            }
+
+            // Mute/unmute
+            mute() {
+                this.setVolume(0);
+            }
+
+            unmute() {
+                this.setVolume(0.5);
+            }
+        }
+
+        // Usage example:
+        // Initialize the laser sound (replace with your MP3 file path)
+        const laserSound = new LaserSound('assets\\SFX\\laser-312360.mp3');
+
+        // Function to fire laser (call this when player shoots)
+        function fireLaser() {
+            // Your laser firing logic here...
+
+            // Play the sound
+            laserSound.play();
+
+            // Example: Create laser projectile, update game state, etc.
+        }
+
+        // Optional: Volume control
+        function adjustLaserVolume(volume) {
+            laserSound.setVolume(volume); // 0.0 to 1.0
+        }
+    </script>
+    <script>
+        // The Tank Class and it's details
+        class Tank {
+            constructor() {
+                this.tank_image = tank_image
+                this.width = 55
+                this.height = 40
+                this.tank_image.resize(this.width, 0);
+                this.x = width / 2 - this.width / 2
+                this.y = height - this.height
+                this.bullets = []
+                this.can_shoot = true
+                this.shots_fired = 0
+                this.number_of_bullets_on_target = 0
+                this.alive = true
+            }
+            //To make the Tank shoot when pressing the 'Z' key.
+            shoot() {
+                if (keyIsDown(90)) {
+                    if (!this.can_shoot) {
+                        return
+                    }
+                    fireLaser()
+                    console.log("Bullet Shot")
+                    this.shots_fired = this.shots_fired + 1
+                    document.getElementById("shots_fired").innerText = this.shots_fired
+                    const bullet = new Bullet(0, this.y)
+                    bullet.x = this.x + this.width / 2 - bullet.width / 2
+                    this.bullets.push(bullet)
+                    this.can_shoot = false
+                    setTimeout(() => {
+                        this.can_shoot = true
+                    }, 300)
+                }
+            }
+            //To make the Tank move when the left and right arrow keys are pressed respectively.
+            move() {
+                if (keyIsDown(LEFT_ARROW)) {
+                    this.x = this.x - 5;
+                    if (this.x < 0) {
+                        this.x = 0
+                    }
+                }
+                if (keyIsDown(RIGHT_ARROW)) {
+                    this.x = this.x + 5;
+                    if (this.x > width - this.width) {
+                        this.x = width - this.width
+                    }
+                }
+                for (var bullet_index = 0; bullet_index < this.bullets.length; bullet_index = bullet_index + 1) {
+                    const bullet = this.bullets[bullet_index]
+                    bullet.move()
+                }
+            }
+            //This designs the tank and sets up the image.
+            draw() {
+                push();
+                strokeWeight(0);
+                fill(0, 255, 0);
+                stroke(255, 0, 0);
+                image(this.tank_image, this.x, this.y);
+                for (var bullet_index = 0; bullet_index < this.bullets.length; bullet_index = bullet_index + 1) {
+                    const bullet = this.bullets[bullet_index]
+                    bullet.draw()
+                }
+                pop();
+            }
+            //This removes the old bullets once they leave the screen.
+            clear_old_bullets() {
+                for (var bullet_index = this.bullets.length - 1; bullet_index >= 0; bullet_index = bullet_index - 1) {
+                    const bullet = this.bullets[bullet_index]
+                    if (bullet.y + bullet.height <= 0) {
+                        this.bullets.splice(bullet_index, 1)
+                        console.log("bullet removed")
+                    };
+                }
+            };
+        }
+        //This draws the bullets.
+        class Bullet {
+            constructor(x, y) {
+                this.width = 5
+                this.height = 10
+                this.x = x
+                this.y = y
+                this.speed = -5
+            }
+            move() {
+                this.y = this.y + this.speed
+            }
+            draw() {
+                push();
+                strokeWeight(0);
+                fill(255, 255, 0);
+                stroke(255, 255, 0);
+                rect(this.x, this.y, this.width, this.height);
+                pop();
+            }
+        }
+        //The Invader Class.
+        class Invader {
+            constructor(x, y) {
+                this.invader_image = invader_image
+                this.width = 30
+                this.height = 30
+                this.invader_image.resize(this.width, 0);
+                this.x = x
+                this.y = y
+                this.speed = 2
+                this.descent = this.height
+                this.red = 255
+                this.blue = 0
+                this.green = 0
+                this.health = 3
+                this.points = 100
+
+                // Shooting properties
+                this.bullets = [] // Array to store invader's bullets
+                this.shootChance = 0.005 // 0.5% chance per frame to shoot (adjust as needed)
+                this.bulletSpeed = 3 // Speed of invader bullets
+            }
+
+            //This makes the Invader moves.
+            move() {
+                this.shoot_and_update()
+                if (this.x > width - this.width) {
+                    if (this.speed > 0) {
+                        return true
+                    }
+                    this.x = this.x + this.speed
+                    return false
+                }
+                if (this.x < 0) {
+                    this.x = this.x + this.speed
+                    if (this.speed < 0) {
+                        return true
+                    }
+                    return false
+                }
+                this.x = this.x + this.speed
+                return false
+            }
+
+            //This lets the invaders drop down and move backwards.
+            drop_and_reverse() {
+                console.log("Edge Hit")
+                this.y = this.y + this.height
+                this.speed = - this.speed
+                this.x = this.x + this.speed
+            }
+
+            // Random shooting method
+            tryToShoot() {
+                if (Math.random() < this.shootChance) {
+                    this.shoot()
+                }
+            }
+
+            // Create a bullet
+            shoot() {
+                const bullet = {
+                    x: this.x + this.width / 2, // Center the bullet on invader
+                    y: this.y + this.height,    // Start bullet at bottom of invader
+                    speed: this.bulletSpeed,
+                    width: 4,
+                    height: 8
+                }
+                this.bullets.push(bullet)
+            }
+
+            // Update all bullets
+            updateBullets() {
+                // Move bullets down
+                for (let i = this.bullets.length - 1; i >= 0; i--) {
+                    this.bullets[i].y += this.bullets[i].speed
+
+                    // Remove bullets that go off screen
+                    if (this.bullets[i].y > height) {
+                        this.bullets.splice(i, 1)
+                    }
+                }
+            }
+
+            // Draw bullets
+            drawBullets() {
+                push()
+                fill(255, 0, 0) // Red bullets for invaders
+                noStroke()
+                for (const bullet of this.bullets) {
+                    rect(bullet.x, bullet.y, bullet.width, bullet.height)
+                }
+                pop()
+            }
+
+            draw() {
+                push();
+                fill(this.red, this.blue, this.green);
+                stroke(0, 0, 255);
+                image(this.invader_image, this.x, this.y);
+                pop();
+
+                // Draw bullets
+                this.drawBullets()
+            }
+
+            // Update method to call shooting and bullet updates
+            shoot_and_update() {
+                this.tryToShoot()
+                this.updateBullets()
+            }
+
+            //This detects hits upon the invaders.
+            evaluate_hits(bullets) {
+                var number_of_bullets_on_target = 0
+                for (var bullet_index = bullets.length - 1; bullet_index >= 0; bullet_index = bullet_index - 1) {
+                    const bullet = bullets[bullet_index]
+                    if (bullet.x >= this.x && bullet.x <= this.x + this.width && bullet.y >= this.y && bullet.y <= this.y + this.height) {
+                        console.log("hit")
+                        number_of_bullets_on_target = number_of_bullets_on_target + 1
+                        this.red = this.red - 100
+                        this.health = this.health - 1
+                        bullets.splice(bullet_index, 1)
+                    }
+                }
+                return number_of_bullets_on_target
+            }
+
+            // Method to check if invader bullets hit a target (like the player)
+            checkBulletCollisions(target) {
+                for (let i = this.bullets.length - 1; i >= 0; i--) {
+                    const bullet = this.bullets[i]
+                    if (bullet.x >= target.x && bullet.x <= target.x + target.width &&
+                        bullet.y >= target.y && bullet.y <= target.y + target.height) {
+                        this.bullets.splice(i, 1) // Remove the bullet
+                        return true // Hit detected
+                    }
+                }
+                return false // No hit
+            }
+        }
+        //And the preload.
+        var tank
+        var invaders = []
+        var tank_image;
+        var invader_image;
+        var score = 0
+        let gameOverAlpha = 0;
+        let youWinAlpha = 0;
+        let alphaDirection = 1;
+        let refreshButton;
+        function preload() {
+            console.log("In the preload")
+            tank_image = loadImage('\\assets\\SpaceInvader_LaserCannon.png');
+            invader_image = loadImage('\\assets\\Space-Invaders-PNG-Photos.png');
+        }
+        //This sets up the canvas/background
+        function setup() {
+            createCanvas(600, 600,);
+            tank = new Tank()
+            strokeWeight(0);
+            fill(0, 255, 0);
+            stroke(255, 0, 0);
+            //Sets up the number of invaders and creates an index for them.
+            let number_of_invaders = 1
+            for (var invader_index = 0; invader_index < number_of_invaders; invader_index = invader_index + 1) {
+                const invader = new Invader(0, 20)
+                invader.x = invader_index * (invader.width * 2) + 10
+                invaders.push(invader)
+            }
+
+        }
+
+        function draw() {
+            //To handle the win condition.
+            if (invaders.length == 0) {
+                youWin()
+            }
+            else if (!tank.alive){
+                gameOver()
+            }
+            else  {
+
+                background(0, 0, 0);
+                tank.shoot()
+                tank.move()
+                tank.clear_old_bullets()
+                tank.draw()
+                //To define the edges a bit more effectively.
+                let edge_hit = false;
+                for (var invader_index = invaders.length - 1; invader_index >= 0; invader_index = invader_index - 1) {
+                    const invader = invaders[invader_index]
+                    const edge_has_been_hit = invader.move()
+                    if (edge_has_been_hit) {
+                        edge_hit = true;
+                        break; // Stop processing more invaders this frame
+                    }
+                }
+                if (edge_hit) {
+                    // Now handle the fleet movement
+                    for (var invader_index_to_move = invaders.length - 1; invader_index_to_move >= 0; invader_index_to_move = invader_index_to_move - 1) {
+                        const invader_to_move = invaders[invader_index_to_move]
+                        invader_to_move.drop_and_reverse()
+                    }
+                }
+                for (var invader_index = invaders.length - 1; invader_index >= 0; invader_index = invader_index - 1) {
+                    const invader = invaders[invader_index]
+                    const number_of_bullets_on_target = invader.evaluate_hits(tank.bullets)
+                    tank.number_of_bullets_on_target = tank.number_of_bullets_on_target + number_of_bullets_on_target
+                    if (invader.health <= 0) {
+                        invaders.splice(invader_index, 1);
+                        console.log("Invader Destroyed")
+                        score = score + invader.points
+                    }
+                    if (invader.checkBulletCollisions(tank)) {
+                        console.log("Tank Hit")
+                        tank.alive = false
+                    }
+
+                    invader.draw()
+                }
+                document.getElementById("score").innerText = score
+                document.getElementById("number_of_invaders").innerText = invaders.length
+                document.getElementById("shots_on_target").innerText = tank.number_of_bullets_on_target
+            }
+            
+        }
+        function gameOver() {
+            background(0);
+
+            // Pulsing animation
+            gameOverAlpha += alphaDirection * 3;
+            if (gameOverAlpha >= 255) {
+                gameOverAlpha = 255;
+                alphaDirection = -1;
+            } else if (gameOverAlpha <= 100) {
+                gameOverAlpha = 100;
+                alphaDirection = 1;
+            }
+
+            textAlign(CENTER, CENTER);
+            textSize(72);
+            fill(255, 0, 0, gameOverAlpha);
+            text("GAME OVER", width / 2, height / 2);
+            // Create a game over button that refreshes the page
+
+            let canvas = document.querySelector('canvas');
+            let canvasRect = canvas.getBoundingClientRect();
+            let buttonWidth = 120; // Approximate button width
+            let buttonHeight = 40; // Approximate button height
+
+            refreshButton = createButton('Try Again?');
+            refreshButton.position(
+                canvasRect.left + width / 2 - buttonWidth / 2,
+                canvasRect.top + height * 0.66 - buttonHeight / 2
+            );
+
+
+            refreshButton.mousePressed(refreshPage);
+
+            // Optional: Style the button
+            refreshButton.style('padding', '10px 20px');
+            refreshButton.style('background-color', '#4CAF50');
+            refreshButton.style('color', 'white');
+            refreshButton.style('border', 'none');
+            refreshButton.style('border-radius', '4px');
+            refreshButton.style('cursor', 'pointer');
+            refreshButton.style('font-size', '16px');
+        }
+        function youWin() {
+            background(0);
+
+            // Pulsing animation
+            youWinAlpha += alphaDirection * 3;
+            if (youWinAlpha >= 255) {
+                youWinAlpha = 255;
+                alphaDirection = -1;
+            } else if (youWinAlpha <= 100) {
+                youWinAlpha = 100;
+                alphaDirection = 1;
+            }
+
+            textAlign(CENTER, CENTER);
+            textSize(72);
+            fill(255, 0, 0, youWinAlpha);
+            text("Victory!", width / 2, height / 2);
+            // Create a Victory button that refreshes the page
+
+            let canvas = document.querySelector('canvas');
+            let canvasRect = canvas.getBoundingClientRect();
+            let buttonWidth = 120; // Approximate button width
+            let buttonHeight = 40; // Approximate button height
+
+            refreshButton = createButton('Play Again?');
+            refreshButton.position(
+                canvasRect.left + width / 2 - buttonWidth / 2,
+                canvasRect.top + height * 0.66 - buttonHeight / 2
+            );
+
+
+            refreshButton.mousePressed(refreshPage);
+
+            // Optional: Style the button
+            refreshButton.style('padding', '10px 20px');
+            refreshButton.style('background-color', '#4CAF50');
+            refreshButton.style('color', 'white');
+            refreshButton.style('border', 'none');
+            refreshButton.style('border-radius', '4px');
+            refreshButton.style('cursor', 'pointer');
+            refreshButton.style('font-size', '16px');
+        }
+        function refreshPage() {
+            location.reload();
+        }
+    </script>
+</body>
+
+</html>

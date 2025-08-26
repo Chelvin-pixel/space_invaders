@@ -122,7 +122,6 @@
                         return
                     }
                     fireLaser()
-                    console.log("Bullet Shot")
                     this.shots_fired = this.shots_fired + 1
                     document.getElementById("shots_fired").innerText = this.shots_fired
                     const bullet = new Bullet(0, this.y)
@@ -172,7 +171,6 @@
                     const bullet = this.bullets[bullet_index]
                     if (bullet.y + bullet.height <= 0) {
                         this.bullets.splice(bullet_index, 1)
-                        console.log("bullet removed")
                     };
                 }
             };
@@ -244,7 +242,6 @@
 
             //This lets the invaders drop down and move backwards.
             drop_and_reverse() {
-                console.log("Edge Hit")
                 this.y = this.y + this.height
                 this.speed = - this.speed
                 this.x = this.x + this.speed
@@ -316,7 +313,6 @@
                 for (var bullet_index = bullets.length - 1; bullet_index >= 0; bullet_index = bullet_index - 1) {
                     const bullet = bullets[bullet_index]
                     if (bullet.x >= this.x && bullet.x <= this.x + this.width && bullet.y >= this.y && bullet.y <= this.y + this.height) {
-                        console.log("hit")
                         number_of_bullets_on_target = number_of_bullets_on_target + 1
                         this.red = this.red - 100
                         this.health = this.health - 1
@@ -350,7 +346,6 @@
         let alphaDirection = 1;
         let refreshButton;
         function preload() {
-            console.log("In the preload")
             tank_image = loadImage('\\assets\\SpaceInvader_LaserCannon.png');
             invader_image = loadImage('\\assets\\Space-Invaders-PNG-Photos.png');
         }
@@ -362,7 +357,7 @@
             fill(0, 255, 0);
             stroke(255, 0, 0);
             //Sets up the number of invaders and creates an index for them.
-            let number_of_invaders = 1
+            let number_of_invaders = 10
             for (var invader_index = 0; invader_index < number_of_invaders; invader_index = invader_index + 1) {
                 const invader = new Invader(0, 20)
                 invader.x = invader_index * (invader.width * 2) + 10
@@ -376,10 +371,10 @@
             if (invaders.length == 0) {
                 youWin()
             }
-            else if (!tank.alive){
+            else if (!tank.alive) {
                 gameOver()
             }
-            else  {
+            else {
 
                 background(0, 0, 0);
                 tank.shoot()
@@ -403,17 +398,36 @@
                         invader_to_move.drop_and_reverse()
                     }
                 }
+                // Defeat condition - check if invaders hit bottom (only run if invaders exist)
+                if (invaders && invaders.length > 0) {
+                    // Get height from the first invader, or use a default value
+                    const invader_height = invaders[0].height || 30; 
+                    const bottom_border = height - invader_height;
+                    let bottom_hit = false;
+
+                    for (let invader_index = 0; invader_index < invaders.length; invader_index++) {
+                        const current_invader = invaders[invader_index];
+
+                        // Check if this invader has hit or passed the bottom border
+                        if (current_invader.y >= bottom_border) {
+                            bottom_hit = true;
+                            break; 
+                        }
+                    }
+
+                    if (bottom_hit) {
+                        gameOver();
+                    }
+                }
                 for (var invader_index = invaders.length - 1; invader_index >= 0; invader_index = invader_index - 1) {
                     const invader = invaders[invader_index]
                     const number_of_bullets_on_target = invader.evaluate_hits(tank.bullets)
                     tank.number_of_bullets_on_target = tank.number_of_bullets_on_target + number_of_bullets_on_target
                     if (invader.health <= 0) {
                         invaders.splice(invader_index, 1);
-                        console.log("Invader Destroyed")
                         score = score + invader.points
                     }
                     if (invader.checkBulletCollisions(tank)) {
-                        console.log("Tank Hit")
                         tank.alive = false
                     }
 
@@ -423,7 +437,7 @@
                 document.getElementById("number_of_invaders").innerText = invaders.length
                 document.getElementById("shots_on_target").innerText = tank.number_of_bullets_on_target
             }
-            
+
         }
         function gameOver() {
             background(0);
@@ -445,14 +459,13 @@
             // Create a game over button that refreshes the page
 
             let canvas = document.querySelector('canvas');
-            let canvasRect = canvas.getBoundingClientRect();
             let buttonWidth = 120; // Approximate button width
             let buttonHeight = 40; // Approximate button height
 
             refreshButton = createButton('Try Again?');
             refreshButton.position(
-                canvasRect.left + width / 2 - buttonWidth / 2,
-                canvasRect.top + height * 0.66 - buttonHeight / 2
+                width / 2 - buttonWidth / 2,
+                height * 0.9 - buttonHeight / 2
             );
 
 
@@ -487,14 +500,13 @@
             // Create a Victory button that refreshes the page
 
             let canvas = document.querySelector('canvas');
-            let canvasRect = canvas.getBoundingClientRect();
             let buttonWidth = 120; // Approximate button width
             let buttonHeight = 40; // Approximate button height
 
             refreshButton = createButton('Play Again?');
             refreshButton.position(
-                canvasRect.left + width / 2 - buttonWidth / 2,
-                canvasRect.top + height * 0.66 - buttonHeight / 2
+                width / 2 - buttonWidth / 2,
+                height * 0.9 - buttonHeight / 2
             );
 
 
